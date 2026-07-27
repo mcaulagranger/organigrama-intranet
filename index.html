@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Organigrama Granger</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    background: #f7f2e7;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    color: #22201c;
+    min-height: 100vh;
+  }
+  .hero {
+    background: #22201c;
+    padding: 22px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content:''; position:absolute; right:0; top:0; bottom:0; width:6px; background:#f18a00;
+  }
+  .hero h1 { color:#fff; font-size:22px; font-weight:500; margin:0 0 3px; }
+  .hero h1 span { color:#f18a00; }
+  .hero p { color:#888780; font-size:12px; margin:0; }
+
+  .stage { overflow:auto; padding:24px; }
+  .canvas {
+    position: relative;
+    width: 2235px;
+    height: 1252px;
+    margin: 0 auto;
+  }
+  svg.lines {
+    position:absolute; inset:0;
+    width:2235px; height:1252px;
+    pointer-events:none;
+    z-index: 1;
+  }
+  svg.lines line, svg.lines path {
+    stroke: rgba(34,32,28,0.35);
+    stroke-width: 1.5;
+    fill:none;
+    stroke-linecap: round;
+  }
+  svg.lines .sep {
+    stroke: rgba(34,32,28,0.15);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+  }
+  svg.lines .arr {
+    stroke: #22201c;
+    stroke-width: 2;
+  }
+
+  .level-label {
+    position:absolute;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #888780;
+    text-transform: uppercase;
+    z-index: 2;
+  }
+
+  /* Cards */
+  .card {
+    position: absolute;
+    border-radius: 12px;
+    display:flex; flex-direction:column; align-items:center;
+    padding: 10px 8px 8px;
+    box-shadow: 0 2px 8px rgba(34,32,28,0.08);
+    z-index: 3;
+    text-align:center;
+  }
+  .card .av, .card img.ph {
+    width: 44px; height: 44px; border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.4);
+    flex-shrink: 0;
+  }
+  .card .av {
+    display:flex; align-items:center; justify-content:center;
+    color: #fff; font-weight:700; font-size:14px;
+    background: rgba(255,255,255,0.2);
+  }
+  .card .role {
+    font-size: 8px; font-weight:600; text-transform:uppercase;
+    letter-spacing: 0.4px; opacity: 0.85;
+    margin-top: 6px;
+    line-height: 1.15;
+  }
+  .card .name {
+    font-size: 11px; font-weight: 600; line-height:1.25;
+    margin-top: 2px;
+  }
+
+  /* Directorio label pill */
+  .dir-label {
+    background:#22201c; color:#fff;
+    border-radius: 8px; padding: 10px 26px;
+    font-size: 12px; font-weight:700; letter-spacing:2.5px;
+    text-transform: uppercase;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 3px 10px rgba(34,32,28,0.15);
+    z-index: 3;
+    position:absolute;
+  }
+
+  /* Level colors */
+  .card.dir  { background:#2a2a2a; color:#fff; }
+  .card.dir .av { background:#f18a00; }
+
+  .card.ops  { background:#22201c; color:#fff; }
+  .card.adm  { background:#f18a00; color:#fff; }
+  .card.cal  { background:#4a7c3f; color:#fff; }
+  .card.com  { background:#a63d2a; color:#fff; }
+
+  /* Jefes: darker gray with dept accent */
+  .card.jefe {
+    background:#3d3d3a; color:#fff;
+  }
+  .card.jefe .av, .card.jefe img.ph {
+    width: 38px; height:38px;
+    border: 1.5px solid rgba(255,255,255,0.3);
+  }
+  .card.jefe .role { font-size:7.5px; }
+  .card.jefe .name { font-size:10.5px; }
+
+  /* Analista: light background with colored top stripe */
+  .card.analista {
+    background:#fff;
+    border-top: 3px solid #999;
+    color:#22201c;
+    padding-top: 8px;
+  }
+  .card.analista.ops  { border-top-color:#22201c; background:#fff; color:#22201c; }
+  .card.analista.adm  { border-top-color:#f18a00; background:#fff; color:#22201c; }
+  .card.analista.cal  { border-top-color:#4a7c3f; background:#fff; color:#22201c; }
+  .card.analista.com  { border-top-color:#a63d2a; background:#fff; color:#22201c; }
+  .card.analista .av, .card.analista img.ph {
+    width: 36px; height:36px;
+    border: 1.5px solid rgba(34,32,28,0.12);
+  }
+  .card.analista .av { color:#fff; background:#888; }
+  .card.analista .av.ops { background:#22201c; }
+  .card.analista .av.adm { background:#f18a00; }
+  .card.analista .av.cal { background:#4a7c3f; }
+  .card.analista .av.com { background:#a63d2a; }
+  .card.analista .role { font-size:7.5px; color:#888780; opacity:1; }
+  .card.analista .name { font-size:10px; }
+
+  /* Soporte: even smaller, more compact */
+  .card.soporte {
+    background:#fff;
+    color:#22201c;
+    border-top: 3px solid #bbb;
+    padding: 8px 6px 6px;
+  }
+  .card.soporte.ops { border-top-color:#22201c; }
+  .card.soporte.adm { border-top-color:#f18a00; }
+  .card.soporte.cal { border-top-color:#4a7c3f; }
+  .card.soporte.com { border-top-color:#a63d2a; }
+  .card.soporte .av, .card.soporte img.ph {
+    width: 32px; height:32px;
+    border:1.5px solid rgba(34,32,28,0.12);
+  }
+  .card.soporte .av { color:#fff; background:#888; }
+  .card.soporte .av.adm { background:#f18a00; }
+  .card.soporte .av.cal { background:#4a7c3f; }
+  .card.soporte .av.com { background:#a63d2a; }
+  .card.soporte .role { font-size:7px; color:#888780; opacity:1; }
+  .card.soporte .name { font-size:9.5px; }
+
+  /* Group boxes (operarios) */
+  .group {
+    position:absolute;
+    background:#fff;
+    border:1px solid rgba(34,32,28,0.12);
+    border-top: 3px solid #22201c;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(34,32,28,0.08);
+    z-index: 3;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .group .g-title {
+    background:#22201c; color:#fff;
+    padding: 6px 10px;
+    font-size: 10px; font-weight:700; letter-spacing:1.5px;
+    text-align:center; text-transform:uppercase;
+  }
+  .group .g-body {
+    padding: 10px 8px;
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    flex: 1;
+  }
+  .op-item {
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    background:#f7f2e7;
+    border-radius:8px;
+    padding:6px 4px;
+  }
+  .op-item img, .op-item .av {
+    width: 28px; height:28px; border-radius:50%;
+    object-fit:cover;
+    border: 1px solid rgba(34,32,28,0.15);
+  }
+  .op-item .av {
+    background:#22201c; color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 9px; font-weight:700;
+  }
+  .op-item .n { font-size:8.5px; font-weight:600; margin-top:4px; line-height:1.2; }
+  .op-empty {
+    display:flex; align-items:center; justify-content:center;
+    color: #888780; font-size:10px; font-style:italic;
+    flex: 1; padding: 16px;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>Organigrama <span>Granger</span></h1>
+  <p>Estructura del equipo · replica del organigrama fuente</p>
+</div>
+<div class="stage">
+<div class="canvas">
+<svg class="lines" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#22201c" />
+    </marker>
+  </defs>
+  <line class="sep" x1="834.0" y1="122.0" x2="1334.0" y2="122.0" />
+  <line class="sep" x1="255.0" y1="282.0" x2="1936.0" y2="282.0" />
+  <line class="sep" x1="255.0" y1="467.0" x2="1936.0" y2="467.0" />
+  <line class="sep" x1="40.0" y1="652.0" x2="2093.0" y2="652.0" />
+  <line class="sep" x1="40.0" y1="842.0" x2="2195.0" y2="842.0" />
+  <line class="sep" x1="84.0" y1="1012.0" x2="2195.0" y2="1012.0" />
+  <line class="arr" x1="1099.0" y1="84.0" x2="939.0" y2="139.0" marker-end="url(#ah)" />
+  <line class="arr" x1="1119.0" y1="84.0" x2="1229.0" y2="139.0" marker-end="url(#ah)" />
+  <line x1="939.0" y1="251.0" x2="939.0" y2="287.0" />
+  <line x1="1229.0" y1="251.0" x2="1229.0" y2="287.0" />
+  <line x1="939.0" y1="287.0" x2="1229.0" y2="287.0" />
+  <line x1="1084.0" y1="287.0" x2="1084.0" y2="282.0" />
+  <line x1="360.0" y1="282.0" x2="1831.0" y2="282.0" />
+  <line x1="360.0" y1="282.0" x2="360.0" y2="323.0" />
+  <line x1="811.0" y1="282.0" x2="811.0" y2="323.0" />
+  <line x1="1500.0" y1="282.0" x2="1500.0" y2="323.0" />
+  <line x1="1831.0" y1="282.0" x2="1831.0" y2="323.0" />
+  <line x1="811.0" y1="431.0" x2="811.0" y2="467.0" />
+  <line x1="811.0" y1="467.0" x2="668.0" y2="467.0" />
+  <line x1="668.0" y1="467.0" x2="668.0" y2="517.0" />
+  <line x1="811.0" y1="431.0" x2="811.0" y2="467.0" />
+  <line x1="810.0" y1="467.0" x2="810.0" y2="517.0" />
+  <line x1="360.0" y1="431.0" x2="360.0" y2="652.0" />
+  <line x1="360.0" y1="652.0" x2="114.0" y2="652.0" />
+  <line x1="114.0" y1="652.0" x2="114.0" y2="703.0" />
+  <line x1="360.0" y1="431.0" x2="360.0" y2="652.0" />
+  <line x1="360.0" y1="652.0" x2="231.0" y2="652.0" />
+  <line x1="231.0" y1="652.0" x2="231.0" y2="703.0" />
+  <line x1="360.0" y1="431.0" x2="360.0" y2="652.0" />
+  <line x1="360.0" y1="652.0" x2="358.0" y2="652.0" />
+  <line x1="358.0" y1="652.0" x2="358.0" y2="703.0" />
+  <line x1="810.0" y1="617.0" x2="810.0" y2="652.0" />
+  <line x1="810.0" y1="652.0" x2="725.0" y2="652.0" />
+  <line x1="725.0" y1="652.0" x2="725.0" y2="703.0" />
+  <line x1="810.0" y1="617.0" x2="810.0" y2="652.0" />
+  <line x1="810.0" y1="652.0" x2="868.0" y2="652.0" />
+  <line x1="868.0" y1="652.0" x2="868.0" y2="703.0" />
+  <line x1="811.0" y1="431.0" x2="811.0" y2="652.0" />
+  <line x1="811.0" y1="652.0" x2="1018.0" y2="652.0" />
+  <line x1="1018.0" y1="652.0" x2="1018.0" y2="703.0" />
+  <line x1="1500.0" y1="431.0" x2="1500.0" y2="652.0" />
+  <line x1="1500.0" y1="652.0" x2="1352.0" y2="652.0" />
+  <line x1="1352.0" y1="652.0" x2="1352.0" y2="703.0" />
+  <line x1="1500.0" y1="431.0" x2="1500.0" y2="652.0" />
+  <line x1="1500.0" y1="652.0" x2="1500.0" y2="703.0" />
+  <line x1="1831.0" y1="431.0" x2="1831.0" y2="652.0" />
+  <line x1="1831.0" y1="652.0" x2="1656.0" y2="652.0" />
+  <line x1="1656.0" y1="652.0" x2="1656.0" y2="703.0" />
+  <line x1="1831.0" y1="431.0" x2="1831.0" y2="652.0" />
+  <line x1="1831.0" y1="652.0" x2="1784.0" y2="652.0" />
+  <line x1="1784.0" y1="652.0" x2="1784.0" y2="703.0" />
+  <line x1="1831.0" y1="431.0" x2="1831.0" y2="652.0" />
+  <line x1="1831.0" y1="652.0" x2="1904.0" y2="652.0" />
+  <line x1="1904.0" y1="652.0" x2="1904.0" y2="703.0" />
+  <line x1="1831.0" y1="431.0" x2="1831.0" y2="652.0" />
+  <line x1="1831.0" y1="652.0" x2="2019.0" y2="652.0" />
+  <line x1="2019.0" y1="652.0" x2="2019.0" y2="703.0" />
+  <line x1="811.0" y1="431.0" x2="811.0" y2="842.0" />
+  <line x1="811.0" y1="842.0" x2="860.0" y2="842.0" />
+  <line x1="860.0" y1="842.0" x2="860.0" y2="891.0" />
+  <line x1="811.0" y1="431.0" x2="811.0" y2="842.0" />
+  <line x1="811.0" y1="842.0" x2="1064.0" y2="842.0" />
+  <line x1="1064.0" y1="842.0" x2="1064.0" y2="891.0" />
+  <line x1="1500.0" y1="431.0" x2="1500.0" y2="652.0" />
+  <line x1="1500.0" y1="652.0" x2="1562.0" y2="652.0" />
+  <line x1="1562.0" y1="652.0" x2="1562.0" y2="891.0" />
+  <line x1="1831.0" y1="431.0" x2="1831.0" y2="652.0" />
+  <line x1="1831.0" y1="652.0" x2="2110.0" y2="652.0" />
+  <line x1="2110.0" y1="652.0" x2="2110.0" y2="891.0" />
+  <line x1="360.0" y1="431.0" x2="360.0" y2="1012.0" />
+  <line x1="360.0" y1="1012.0" x2="274.0" y2="1012.0" />
+  <line x1="274.0" y1="1012.0" x2="274.0" y2="1002.0" />
+  <line x1="360.0" y1="431.0" x2="360.0" y2="1012.0" />
+  <line x1="360.0" y1="1012.0" x2="606.0" y2="1012.0" />
+  <line x1="606.0" y1="1012.0" x2="606.0" y2="1002.0" />
+</svg>
+<div class="dir-label" style="left:989.0px; top:40.0px; width:240px; height:44px;">DIRECTORIO</div>
+<div class="card dir" style="left:854.0px; top:143.0px; width:170px; height:108px;"><div class="av dir">PR</div><div class="role">Director</div><div class="name">Pablo Rucci</div></div>
+<div class="card dir" style="left:1144.0px; top:143.0px; width:170px; height:108px;"><div class="av dir">TG</div><div class="role">Director</div><div class="name">Tomás Giuliani</div></div>
+<div class="card ops" style="left:275.0px; top:323.0px; width:170px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555559/Jos%C3%A9_Lobos_-_Operaciones_hvvtx6.png" alt="José Lobos"/><div class="role">Resp. Operaciones</div><div class="name">José Lobos</div></div>
+<div class="card adm" style="left:726.0px; top:323.0px; width:170px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784554656/Mat%C3%ADas_Navarro_-_Administraci%C3%B3n_z52xg0.jpg" alt="Matías Navarro"/><div class="role">Resp. Adm. y Finanzas</div><div class="name">Matías Navarro</div></div>
+<div class="card cal" style="left:1415.0px; top:323.0px; width:170px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555310/Nerina_Aglieri_-_Calidad_p2luch.jpg" alt="Nerina Aglieri"/><div class="role">Resp. Calidad e I+D</div><div class="name">Nerina Aglieri</div></div>
+<div class="card com" style="left:1746.0px; top:323.0px; width:170px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555088/Rodrigo_Sabena_-_Comercial_sdeeux.jpg" alt="Rodrigo Sabena"/><div class="role">Resp. Comercial</div><div class="name">Rodrigo Sabena</div></div>
+<div class="card jefe" style="left:593.0px; top:517.0px; width:150px; height:100px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555027/Antonella_Durando_-_RRHH_dk0iys.jpg" alt="Antonella Durando"/><div class="role">Jefa RRHH</div><div class="name">Antonella Durando</div></div>
+<div class="card jefe" style="left:735.0px; top:517.0px; width:150px; height:100px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784554723/Jonatan_Ros%C3%A9_-_Administraci%C3%B3n_1_mfp2hm.jpg" alt="Jonatan Rosé"/><div class="role">Jefe Contabilidad</div><div class="name">Jonatan Rosé</div></div>
+<div class="card analista ops" style="left:60.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555656/Barbara_Sejas_-_Operaciones_1_rwwcna.jpg" alt="Bárbara Sejas"/><div class="role">Anal. Planificación</div><div class="name">Bárbara Sejas</div></div>
+<div class="card analista ops" style="left:177.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555520/Melina_Barreto_-_Operaciones_yzq1lw.jpg" alt="Melina Barreto"/><div class="role">Anal. Compras</div><div class="name">Melina Barreto</div></div>
+<div class="card analista ops" style="left:304.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555607/Francisco_Monje_-_Operaciones_nmjkge.jpg" alt="Francisco Monje"/><div class="role">Anal. Logística</div><div class="name">Francisco Monje</div></div>
+<div class="card analista adm" style="left:671.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784554985/Dana_Sosa_-_Administraci%C3%B3n_h8n6kc.jpg" alt="Dana Sosa"/><div class="role">Anal. Contable</div><div class="name">Dana Sosa</div></div>
+<div class="card analista adm" style="left:814.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784554809/Yamila_Varoli_-_Administraci%C3%B3n_1_ptlm5u.jpg" alt="Yamila Varoli"/><div class="role">Anal. Adm.</div><div class="name">Yamila Varoli</div></div>
+<div class="card analista adm" style="left:964.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784554949/El%C3%ADas_Coria_-_IT_ncmkac.jpg" alt="Elías Coria"/><div class="role">Anal. Funcional</div><div class="name">Elías Coria</div></div>
+<div class="card analista cal" style="left:1298.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555427/Fernando_Imhoff_-_I_D_ef51dc.jpg" alt="Fernando Imhoff"/><div class="role">Anal. I+D</div><div class="name">Fernando Imhoff</div></div>
+<div class="card analista cal" style="left:1446.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555474/Ail%C3%A9n_Valli_-_Calidad_vcrqqi.jpg" alt="Ailén Valli"/><div class="role">Anal. Calidad</div><div class="name">Ailén Valli</div></div>
+<div class="card analista com" style="left:1602.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555257/Ignacio_Bartizaghi_-_Comercial_jy4zbz.jpg" alt="Ignacio Bartizaghi"/><div class="role">Ejec. Comercial</div><div class="name">Ignacio Bartizaghi</div></div>
+<div class="card analista com" style="left:1730.0px; top:703.0px; width:108px; height:108px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555220/Juli%C3%A1n_Priotti_-_Comercial_n6citv.jpg" alt="Julián Priotti"/><div class="role">Ejec. Comercial</div><div class="name">Julián Priotti</div></div>
+<div class="card analista com" style="left:1850.0px; top:703.0px; width:108px; height:108px;"><div class="av com">GP</div><div class="role">Anal. Marketing</div><div class="name">G. Pontiggia</div></div>
+<div class="card analista com" style="left:1965.0px; top:703.0px; width:108px; height:108px;"><div class="av com">LG</div><div class="role">Diseñadora</div><div class="name">Lucía Griguoli</div></div>
+<div class="card soporte adm" style="left:795.0px; top:891.0px; width:130px; height:92px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784554888/Marcos_Caula_-_IT_1_y34xd4.jpg" alt="Marcos Caula"/><div class="role">Soporte IT</div><div class="name">Marcos Caula</div></div>
+<div class="card soporte adm" style="left:999.0px; top:891.0px; width:130px; height:92px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784554770/Yazmin_Sala_-_Comex_1_pnatbn.jpg" alt="Yazmín Sala"/><div class="role">Soporte Comex</div><div class="name">Yazmín Sala</div></div>
+<div class="card soporte cal" style="left:1497.0px; top:891.0px; width:130px; height:92px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555380/Kristal_Pereyra_-_I_D_lyhhq5.jpg" alt="Kristal Pereyra"/><div class="role">Soporte Adm. I+D</div><div class="name">Kristal Pereyra</div></div>
+<div class="card soporte com" style="left:2045.0px; top:891.0px; width:130px; height:92px;"><img class="ph" src="https://res.cloudinary.com/uphhgikb/image/upload/v1784555182/Mar%C3%ADa_Moyano_-_Comercial_bnn7op.jpg" alt="María Moyano"/><div class="role">Soporte Adm.</div><div class="name">María Moyano</div></div>
+<div class="group" style="left:104.0px; top:1002.0px; width:340px; height:210px;">
+  <div class="g-title">LOGÍSTICA</div>
+  <div class="g-body">
+    <div class="op-item"><img src="https://res.cloudinary.com/uphhgikb/image/upload/v1784642790/Juan_Boetto_-_Log%C3%ADstica_haama5.jpg" alt="Juan Boetto"/><div class="n">Juan Boetto</div></div>
+    <div class="op-item"><img src="https://res.cloudinary.com/uphhgikb/image/upload/v1784642832/Ezequiel_Schechtel-_Log%C3%ADstica_zem1xt.jpg" alt="Ezequiel Schechtel"/><div class="n">Ezequiel Schechtel</div></div>
+    <div class="op-item"><div class="av">SG</div><div class="n">Santiago Gutierrez</div></div>
+    <div class="op-item"><div class="av">TB</div><div class="n">Tiago Barrera</div></div>
+  </div>
+</div>
+<div class="group" style="left:476.0px; top:1002.0px; width:260px; height:210px;">
+  <div class="g-title">PRODUCCIÓN</div>
+  <div class="op-empty">Operarios de producción</div>
+</div>
+<div class="level-label" style="left:10px; top:191.0px;">DIRECTORES</div>
+<div class="level-label" style="left:10px; top:371.0px;">RESPONSABLES</div>
+<div class="level-label" style="left:10px; top:561.0px;">JEFES</div>
+<div class="level-label" style="left:10px; top:751.0px;">ANALISTAS</div>
+<div class="level-label" style="left:10px; top:931.0px;">SOPORTE</div>
+<div class="level-label" style="left:10px; top:1101.0px;">OPERARIOS</div>
+</div>
+</div>
+</body>
+</html>
