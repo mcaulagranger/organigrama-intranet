@@ -19,12 +19,7 @@
   .hero h1 span { color:#f18a00; }
   .hero p { color:#888780; font-size:12px; margin:0; }
 
-  .stage {
-    overflow: auto;
-    padding: 24px;
-    height: calc(100vh - 68px);
-    user-select: none;
-  }
+  .stage { overflow:auto; padding:24px; }
   .canvas { position:relative; width:2295px; height:1437px; margin:0 auto; }
   svg.lines { position:absolute; inset:0; width:2295px; height:1437px; pointer-events:none; z-index:1; }
   svg.lines line, svg.lines path {
@@ -136,10 +131,8 @@
   <line class="sep" x1="144.0" y1="1012.0" x2="2255.0" y2="1012.0" />
   <line class="arr" x1="1159.0" y1="84.0" x2="999.0" y2="139.0" marker-end="url(#ah)" />
   <line class="arr" x1="1179.0" y1="84.0" x2="1289.0" y2="139.0" marker-end="url(#ah)" />
-  <line x1="999.0" y1="251.0" x2="999.0" y2="287.0" />
-  <line x1="1289.0" y1="251.0" x2="1289.0" y2="287.0" />
-  <line x1="999.0" y1="287.0" x2="1289.0" y2="287.0" />
-  <line x1="1144.0" y1="287.0" x2="1144.0" y2="282.0" />
+  <line x1="999.0" y1="251.0" x2="999.0" y2="282.0" />
+  <line x1="1289.0" y1="251.0" x2="1289.0" y2="282.0" />
   <line x1="420.0" y1="282.0" x2="1891.0" y2="282.0" />
   <line x1="420.0" y1="282.0" x2="420.0" y2="323.0" />
   <line x1="871.0" y1="282.0" x2="871.0" y2="323.0" />
@@ -274,40 +267,5 @@
 <div class="level-label" style="left:15px; top:1057.0px;">OPERARIOS</div>
 </div>
 </div>
-
-<script>
-  const stage = document.querySelector('.stage');
-  let isDown = false, startX, startY, scrollLeft, scrollTop;
-
-  stage.style.cursor = 'grab';
-
-  stage.addEventListener('mousedown', e => {
-    isDown = true;
-    stage.style.cursor = 'grabbing';
-    startX = e.pageX - stage.offsetLeft;
-    startY = e.pageY - stage.offsetTop;
-    scrollLeft = stage.scrollLeft;
-    scrollTop  = stage.scrollTop;
-  });
-
-  stage.addEventListener('mouseleave', () => {
-    isDown = false;
-    stage.style.cursor = 'grab';
-  });
-
-  stage.addEventListener('mouseup', () => {
-    isDown = false;
-    stage.style.cursor = 'grab';
-  });
-
-  stage.addEventListener('mousemove', e => {
-    if (!isDown) return;
-    e.preventDefault();
-    const x = e.pageX - stage.offsetLeft;
-    const y = e.pageY - stage.offsetTop;
-    stage.scrollLeft = scrollLeft - (x - startX);
-    stage.scrollTop  = scrollTop  - (y - startY);
-  });
-</script>
 </body>
 </html>
