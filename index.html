@@ -18,6 +18,8 @@ html,body{height:100%;overflow:hidden}
 .zoom button:hover{background:var(--orange)}
 .zoom button:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
 .zoom .fit{font-size:13px}
+.hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 18px;border-radius:8px;background:rgba(74,67,64,.85);color:#fff;font-size:14px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:3}
+.hint.show{opacity:1}
 @media print{html,body{height:auto;overflow:visible}.wrap{height:auto}.zoom{display:none} @page{size:landscape;margin:10mm}}
 </style></head>
 <body><div class="wrap"><svg viewBox="0 0 1840 970" role="img" aria-labelledby="t" xmlns="http://www.w3.org/2000/svg">
@@ -32,7 +34,8 @@ html,body{height:100%;overflow:hidden}
 <button type="button" data-zoom="in" aria-label="Acercar" title="Acercar">+</button>
 <button type="button" data-zoom="out" aria-label="Alejar" title="Alejar">&minus;</button>
 <button type="button" data-zoom="fit" class="fit" aria-label="Ver todo" title="Ver todo">&#x26F6;</button>
-</div></div>
+</div>
+<div class="hint" aria-hidden="true">Usá Ctrl + rueda para hacer zoom</div></div>
 <script>
 (function(){
   var wrap=document.querySelector('.wrap'), svg=wrap.querySelector('svg');
@@ -42,7 +45,9 @@ html,body{height:100%;overflow:hidden}
   function apply(){svg.setAttribute('viewBox',vb.x+' '+vb.y+' '+vb.w+' '+vb.h)}
   function clamp(){
     // no permitir alejarse más que "ver todo" ni salirse del dibujo
-    var r=wrap.getBoundingClientRect(), fit=Math.max(W/r.width,H/r.height);
+    var r=wrap.getBoundingClientRect();
+    if(!r.width||!r.height)return; // iframe oculto o sin tamaño todavía
+    var fit=Math.max(W/r.width,H/r.height);
     var s=Math.min(Math.max(vb.w/r.width,fit/MAX),fit);
     var cx=vb.x+vb.w/2, cy=vb.y+vb.h/2;
     vb.w=r.width*s; vb.h=r.height*s;
@@ -53,13 +58,21 @@ html,body{height:100%;overflow:hidden}
   function toSvg(px,py){var r=wrap.getBoundingClientRect();return{x:vb.x+(px-r.left)/r.width*vb.w,y:vb.y+(py-r.top)/r.height*vb.h}}
   function zoomAt(f,px,py){
     var p=toSvg(px,py), r=wrap.getBoundingClientRect();
+    if(!r.width||!r.height)return;
     vb.w/=f; vb.h/=f;
     vb.x=p.x-(px-r.left)/r.width*vb.w; vb.y=p.y-(py-r.top)/r.height*vb.h; clamp();
   }
   function center(f){var r=wrap.getBoundingClientRect();zoomAt(f,r.left+r.width/2,r.top+r.height/2)}
   function fit(){vb={x:0,y:0,w:W,h:H};clamp()}
 
+  // zoom solo con Ctrl + rueda (o pellizco en touchpad); la rueda sola desplaza la página que lo contiene
+  var hint=wrap.querySelector('.hint'), hintT;
   wrap.addEventListener('wheel',function(e){
+    if(!e.ctrlKey&&!e.metaKey){
+      hint.classList.add('show'); clearTimeout(hintT);
+      hintT=setTimeout(function(){hint.classList.remove('show')},1200);
+      return;
+    }
     e.preventDefault();
     zoomAt(Math.exp(-e.deltaY*(e.deltaMode===1?0.05:0.0015)),e.clientX,e.clientY);
   },{passive:false});
@@ -97,7 +110,8 @@ html,body{height:100%;overflow:hidden}
     else if(e.key==='-')center(1/1.4);
     else if(e.key==='0')fit();
   });
-  window.addEventListener('resize',clamp);
+  if(window.ResizeObserver)new ResizeObserver(clamp).observe(wrap);
+  else window.addEventListener('resize',clamp);
   fit();
 })();
 </script>
